@@ -5,111 +5,110 @@ function App() {
   const [weather, setWeather] = useState(null);
   const [quote, setQuote] = useState(null);
   const [currency, setCurrency] = useState(null);
-  const [error, setError] = useState("");
 
-  const backendURL = "https://infohub-production-d579.up.railway.app"; // ✅ Your backend URL
+  // ✅ Use your deployed backend URL here
+  const backendURL = "https://infohub-production-d579.up.railway.app";
 
-  // 🌦 Get Weather
+  // 🌦 Fetch Weather
   const getWeather = async () => {
     try {
       const res = await fetch(`${backendURL}/api/weather?city=${city}`);
       const data = await res.json();
-      if (data.error) {
-        setError(data.error);
-        setWeather(null);
-      } else {
-        setWeather(data);
-        setError("");
-      }
+      setWeather(data);
     } catch (err) {
-      setError("Weather service not reachable");
+      console.error("Weather fetch error:", err);
+      setWeather({ error: "Unable to fetch weather data" });
     }
   };
 
-  // 💬 Get Quote
+  // ✨ Fetch Random Quote
   const getQuote = async () => {
     try {
       const res = await fetch(`${backendURL}/api/quote`);
       const data = await res.json();
       setQuote(data);
     } catch (err) {
-      setQuote({ text: "Could not load quote" });
+      console.error("Quote fetch error:", err);
+      setQuote({ content: "Failed to load quote" });
     }
   };
 
-  // 💱 Get Currency
+  // 💱 Fetch Currency Rate
   const getCurrency = async () => {
     try {
       const res = await fetch(`${backendURL}/api/currency`);
       const data = await res.json();
-      if (data.conversion_rates?.USD) {
-        setCurrency(data.conversion_rates.USD);
-      } else {
-        setCurrency("Unavailable");
-      }
+      setCurrency(data.conversion_rates?.USD || "N/A");
     } catch (err) {
+      console.error("Currency fetch error:", err);
       setCurrency("Error");
     }
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-blue-50 to-blue-100 flex flex-col items-center p-10">
-      <h1 className="text-4xl font-bold mb-6 text-blue-700">🌐 InfoHub</h1>
+    <div className="min-h-screen bg-gradient-to-b from-blue-100 to-indigo-200 flex flex-col items-center p-10">
+      <h1 className="text-4xl font-extrabold mb-8 text-blue-800 drop-shadow-md">
+        🌍 InfoHub Dashboard
+      </h1>
 
       {/* Weather Section */}
-      <div className="bg-white shadow-md p-6 rounded-2xl w-80 mb-6">
-        <h2 className="text-xl font-semibold mb-3">🌦 Weather</h2>
+      <div className="bg-white shadow-lg rounded-2xl p-6 w-80 mb-6">
+        <h2 className="text-2xl font-semibold mb-3 text-gray-700">🌦 Weather</h2>
         <input
           value={city}
           onChange={(e) => setCity(e.target.value)}
-          className="border p-2 w-full rounded mb-3"
+          className="border border-gray-300 p-2 w-full rounded mb-3 focus:ring-2 focus:ring-blue-400"
           placeholder="Enter city"
         />
         <button
           onClick={getWeather}
-          className="bg-blue-600 text-white px-4 py-2 rounded w-full hover:bg-blue-700"
+          className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded w-full"
         >
-          Get Weather
+          Check Weather
         </button>
 
-        {error && <p className="text-red-500 text-sm mt-2">{error}</p>}
         {weather && (
-          <div className="mt-4 text-center">
-            <p>🌍 City: {weather.city}</p>
-            <p>🌡 Temp: {weather.temp}°C</p>
-            <p>☁ Condition: {weather.condition}</p>
+          <div className="mt-4 text-center text-gray-800">
+            {weather.error ? (
+              <p>{weather.error}</p>
+            ) : (
+              <>
+                <p className="font-bold">{weather.city}</p>
+                <p>🌡 Temp: {weather.temperature}°C</p>
+                <p>🌤 Condition: {weather.condition}</p>
+              </>
+            )}
           </div>
         )}
       </div>
 
-      {/* Currency Converter */}
-      <div className="bg-white shadow-md p-6 rounded-2xl w-80 mb-6 text-center">
-        <h2 className="text-xl font-semibold mb-3">💱 INR → USD</h2>
+      {/* Currency Section */}
+      <div className="bg-white shadow-lg rounded-2xl p-6 w-80 mb-6 text-center">
+        <h2 className="text-2xl font-semibold mb-3 text-gray-700">💱 Currency</h2>
         <button
           onClick={getCurrency}
-          className="bg-green-600 text-white px-4 py-2 rounded w-full hover:bg-green-700"
+          className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded w-full"
         >
-          Get Rate
+          Get INR → USD Rate
         </button>
-        {currency && <p className="mt-3">1 INR = {currency} USD</p>}
+        {currency && (
+          <p className="mt-4 text-lg font-medium text-gray-800">
+            1 INR = {currency} USD
+          </p>
+        )}
       </div>
 
       {/* Quote Section */}
-      <div className="bg-white shadow-md p-6 rounded-2xl w-80 text-center">
-        <h2 className="text-xl font-semibold mb-3">✨ Motivational Quote</h2>
+      <div className="bg-white shadow-lg rounded-2xl p-6 w-80 text-center">
+        <h2 className="text-2xl font-semibold mb-3 text-gray-700">✨ Quote</h2>
         <button
           onClick={getQuote}
-          className="bg-purple-600 text-white px-4 py-2 rounded w-full hover:bg-purple-700"
+          className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded w-full"
         >
           New Quote
         </button>
         {quote && (
-          <div className="mt-4 italic">
-            <p>"{quote.text}"</p>
-            {quote.author && (
-              <p className="text-sm text-gray-500 mt-2">— {quote.author}</p>
-            )}
-          </div>
+          <p className="mt-4 italic text-gray-600">“{quote.content}”</p>
         )}
       </div>
     </div>

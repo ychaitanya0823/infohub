@@ -1,69 +1,77 @@
 import express from "express";
-import axios from "axios";
 import cors from "cors";
 import dotenv from "dotenv";
+import axios from "axios";
 
 dotenv.config();
-
 const app = express();
+const PORT = process.env.PORT || 3001;
+
+// ✅ Allow frontend access
 app.use(cors());
 app.use(express.json());
 
-// ✅ Base route (optional sanity check)
-app.get("/", (req, res) => {
-  res.json({ message: "InfoHub backend running 🚀" });
-});
-
-// 🌦 Weather API
+// 🔹 MOCK /api/weather
 app.get("/api/weather", async (req, res) => {
   try {
     const city = req.query.city || "London";
+
+    // Using OpenWeatherMap API (optional — if you don’t have key, use mock data)
     const apiKey = process.env.WEATHER_API_KEY;
-    if (!apiKey) return res.status(500).json({ error: "Missing WEATHER_API_KEY" });
+    if (apiKey) {
+      const weatherRes = await axios.get(
+        `https://api.openweathermap.org/data/2.5/weather?q=${city}&appid=${apiKey}&units=metric`
+      );
+      const w = weatherRes.data;
+      return res.json({
+        city: w.name,
+        temperature: w.main.temp,
+        condition: w.weather[0].description,
+      });
+    }
 
-    const response = await axios.get(
-      `https://api.openweathermap.org/data/2.5/weather`,
-      { params: { q: city, appid: apiKey, units: "metric" } }
-    );
-
-    const data = response.data;
+    // Fallback mock data
     res.json({
-      city: data.name,
-      temp: data.main.temp,
-      condition: data.weather[0].description,
+      city,
+      temperature: 25,
+      condition: "Clear sky",
     });
-  } catch (err) {
-    res.status(500).json({ error: "Could not fetch weather data" });
+  } catch (error) {
+    console.error("Weather Error:", error.message);
+    res.status(500).json({ error: "Weather data unavailable" });
   }
 });
 
-// 💱 Currency API
+// 🔹 MOCK /api/quote
+app.get("/api/quote", async (req, res) => {
+  try {
+    // You can replace with real API like https://api.quotable.io/random
+    const quoteRes = await axios.get("https://api.quotable.io/random");
+    res.json(quoteRes.data);
+  } catch (error) {
+    console.error("Quote Error:", error.message);
+    res.json({ content: "Keep going, you are doing great!" });
+  }
+});
+
+// 🔹 MOCK /api/currency
 app.get("/api/currency", async (req, res) => {
   try {
-    const apiKey = process.env.CURRENCY_API_KEY;
-    if (!apiKey) return res.status(500).json({ error: "Missing CURRENCY_API_KEY" });
-
-    const response = await axios.get(
-      `https://v6.exchangerate-api.com/v6/${apiKey}/latest/INR`
+    const currencyRes = await axios.get(
+      "https://v6.exchangerate-api.com/v6/6b28a8a02b47e8392de3081b/latest/INR"
     );
-
-    res.json(response.data);
-  } catch (err) {
-    res.status(500).json({ error: "Could not fetch currency data" });
+    res.json(currencyRes.data);
+  } catch (error) {
+    console.error("Currency Error:", error.message);
+    res.json({
+      conversion_rates: { USD: 0.012 },
+    });
   }
 });
 
-// ✨ Quote API (mock data)
-app.get("/api/quote", (req, res) => {
-  const quotes = [
-    { text: "Believe you can and you’re halfway there.", author: "Theodore Roosevelt" },
-    { text: "Keep going. Everything you need will come to you at the perfect time.", author: "Unknown" },
-    { text: "Dream big and dare to fail.", author: "Norman Vaughan" },
-  ];
-  const randomQuote = quotes[Math.floor(Math.random() * quotes.length)];
-  res.json(randomQuote);
+// ✅ Root endpoint
+app.get("/", (req, res) => {
+  res.json({ message: "Backend running successfully 🚀" });
 });
 
-// ✅ Start Server
-const PORT = process.env.PORT || 3001;
 app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
