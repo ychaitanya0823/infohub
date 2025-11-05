@@ -1,70 +1,66 @@
+// server/server.js
 import express from "express";
-import axios from "axios";
-import cors from "cors";
+import fetch from "node-fetch";
 import dotenv from "dotenv";
-import path from "path";
-import { fileURLToPath } from "url";
+import cors from "cors";
 
 dotenv.config();
-
 const app = express();
 app.use(cors());
 app.use(express.json());
 
-// ✅ Get current directory
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+const PORT = process.env.PORT || 3001;
 
-// 🌦️ Weather API
+// ✅ Weather API
 app.get("/api/weather", async (req, res) => {
-  try {
-    const city = req.query.city || "London";
-    const apiKey = process.env.WEATHER_API_KEY;
-    const url = `https://api.openweathermap.org/data/2.5/weather?q=${city}&appid=${apiKey}&units=metric`;
+  const city = req.query.city || "London";
+  const apiKey = process.env.WEATHER_API_KEY;
 
-    const response = await axios.get(url);
-    const data = response.data;
+  try {
+    const response = await fetch(
+      `https://api.openweathermap.org/data/2.5/weather?q=${city}&appid=${apiKey}&units=metric`
+    );
+    const data = await response.json();
+
+    if (data.cod !== 200) {
+      return res.status(400).json({ error: data.message });
+    }
 
     res.json({
       city: data.name,
       temp: data.main.temp,
       condition: data.weather[0].description,
     });
-  } catch (err) {
-    console.error("Error fetching weather:", err.message);
-    res.status(500).json({ error: "Failed to fetch weather" });
+  } catch (error) {
+    res.status(500).json({ error: "Weather API failed" });
   }
 });
 
-// 💱 Currency API
+// ✅ Currency API
 app.get("/api/currency", async (req, res) => {
+  const apiKey = process.env.CURRENCY_API_KEY;
   try {
-    const apiKey = process.env.CURRENCY_API_KEY;
-    const url = `https://v6.exchangerate-api.com/v6/${apiKey}/latest/INR`;
-
-    const response = await axios.get(url);
-    res.json(response.data);
-  } catch (err) {
-    res.status(500).json({ error: "Failed to fetch currency data" });
+    const response = await fetch(
+      `https://v6.exchangerate-api.com/v6/${apiKey}/latest/INR`
+    );
+    const data = await response.json();
+    res.json(data);
+  } catch (error) {
+    res.status(500).json({ error: "Currency API failed" });
   }
 });
 
-// 💬 Quote API
+// ✅ Quote API
 app.get("/api/quote", async (req, res) => {
   try {
-    const response = await axios.get("https://api.quotable.io/random");
-    res.json(response.data);
-  } catch (err) {
-    res.status(500).json({ error: "Failed to fetch quote" });
+    const response = await fetch("https://api.quotable.io/random");
+    const data = await response.json();
+    res.json({ text: data.content, author: data.author });
+  } catch (error) {
+    res.status(500).json({ error: "Quote API failed" });
   }
 });
 
-// ✅ Serve frontend
-app.use(express.static(path.join(__dirname, "../client/dist")));
-
-app.get("*", (req, res) => {
-  res.sendFile(path.join(__dirname, "../client/dist/index.html"));
+app.listen(PORT, () => {
+  console.log(`🚀 Server running on port ${PORT}`);
 });
-
-const PORT = process.env.PORT || 3001;
-app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
