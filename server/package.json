@@ -1,6 +1,7 @@
 {
   "name": "infohub-server",
   "version": "1.0.0",
+  "description": "InfoHub backend server",
   "type": "module",
   "main": "server.js",
   "scripts": {

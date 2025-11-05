@@ -1,96 +1,83 @@
 import React, { useState } from "react";
 
-const BASE_URL = "https://infohub-production-d579.up.railway.app";
-
 function App() {
-  const [city, setCity] = useState("");
+  const [city, setCity] = useState("London");
   const [weather, setWeather] = useState(null);
-  const [amount, setAmount] = useState(1);
-  const [currency, setCurrency] = useState("USD");
-  const [converted, setConverted] = useState(null);
-  const [quote, setQuote] = useState("Click 'New Quote' to get inspired!");
+  const [quote, setQuote] = useState(null);
+  const [currency, setCurrency] = useState(null);
 
-  // ✅ Weather API
+  const backendURL = "https://infohub-production-d579.up.railway.app"; // ✅ Use your Railway backend URL
+
   const getWeather = async () => {
-    if (!city) return alert("Enter a city name first!");
-    const res = await fetch(`${BASE_URL}/api/weather?city=${city}`);
+    const res = await fetch(`${backendURL}/api/weather?city=${city}`);
     const data = await res.json();
     setWeather(data);
   };
 
-  // ✅ Currency Converter API
-  const getCurrency = async () => {
-    const res = await fetch(`${BASE_URL}/api/currency`);
+  const getQuote = async () => {
+    const res = await fetch(`${backendURL}/api/quote`);
     const data = await res.json();
-    const rate = data.rates[currency];
-    if (rate) {
-      setConverted((amount * rate).toFixed(2));
-    } else {
-      setConverted("Invalid currency");
-    }
+    setQuote(data);
   };
 
-  // ✅ Motivational Quote API
-  const getQuote = async () => {
-    const res = await fetch(`${BASE_URL}/api/quote`);
+  const getCurrency = async () => {
+    const res = await fetch(`${backendURL}/api/currency`);
     const data = await res.json();
-    setQuote(data.content || "Couldn't fetch quote!");
+    setCurrency(data.conversion_rates?.USD);
   };
 
   return (
-    <div style={{ fontFamily: "Arial", padding: "20px", textAlign: "center" }}>
-      <h1>🌤 InfoHub</h1>
+    <div className="min-h-screen bg-gray-50 flex flex-col items-center p-10">
+      <h1 className="text-4xl font-bold mb-6 text-blue-700">InfoHub</h1>
 
-      {/* WEATHER SECTION */}
-      <section style={{ marginBottom: "20px" }}>
-        <h2>Weather</h2>
+      {/* Weather Section */}
+      <div className="bg-white shadow-md p-6 rounded-xl w-80 mb-6">
+        <h2 className="text-xl font-semibold mb-3">🌦 Weather</h2>
         <input
-          type="text"
-          placeholder="Enter city"
           value={city}
           onChange={(e) => setCity(e.target.value)}
+          className="border p-2 w-full rounded mb-3"
+          placeholder="Enter city"
         />
-        <button onClick={getWeather}>Get Weather</button>
+        <button
+          onClick={getWeather}
+          className="bg-blue-600 text-white px-4 py-2 rounded w-full"
+        >
+          Get Weather
+        </button>
+
         {weather && (
-          <div>
+          <div className="mt-4 text-center">
             <p>City: {weather.city}</p>
-            <p>Temperature: {weather.temp}°C</p>
+            <p>Temp: {weather.temp}°C</p>
             <p>Condition: {weather.condition}</p>
           </div>
         )}
-      </section>
+      </div>
 
-      {/* CURRENCY CONVERTER */}
-      <section style={{ marginBottom: "20px" }}>
-        <h2>💱 Currency Converter (INR → {currency})</h2>
-        <input
-          type="number"
-          value={amount}
-          onChange={(e) => setAmount(e.target.value)}
-        />
-        <select
-          value={currency}
-          onChange={(e) => setCurrency(e.target.value)}
+      {/* Currency Converter */}
+      <div className="bg-white shadow-md p-6 rounded-xl w-80 mb-6 text-center">
+        <h2 className="text-xl font-semibold mb-3">💱 INR → USD</h2>
+        <button
+          onClick={getCurrency}
+          className="bg-green-600 text-white px-4 py-2 rounded w-full"
         >
-          <option value="USD">USD</option>
-          <option value="EUR">EUR</option>
-          <option value="JPY">JPY</option>
-          <option value="GBP">GBP</option>
-        </select>
-        <button onClick={getCurrency}>Convert</button>
-        {converted && (
-          <p>
-            {amount} INR = {converted} {currency}
-          </p>
-        )}
-      </section>
+          Get Rate
+        </button>
+        {currency && <p className="mt-3">1 INR = {currency} USD</p>}
+      </div>
 
-      {/* MOTIVATIONAL QUOTE */}
-      <section>
-        <h2>✨ Motivational Quote</h2>
-        <p>{quote}</p>
-        <button onClick={getQuote}>New Quote</button>
-      </section>
+      {/* Quote Section */}
+      <div className="bg-white shadow-md p-6 rounded-xl w-80 text-center">
+        <h2 className="text-xl font-semibold mb-3">✨ Quote</h2>
+        <button
+          onClick={getQuote}
+          className="bg-purple-600 text-white px-4 py-2 rounded w-full"
+        >
+          New Quote
+        </button>
+        {quote && <p className="mt-3 italic">"{quote.content}"</p>}
+      </div>
     </div>
   );
 }
